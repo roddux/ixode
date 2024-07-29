@@ -47,7 +47,7 @@ static int gsmld_ioctl(struct tty_struct *tty, unsigned int cmd, unsigned long a
 
         // note: to this point, no locks have been taken
 
-        // check if the dlci atr this index is initialized already
+        // check if the dlci at this index is initialized already
         addr = array_index_nospec(dc.channel, NUM_DLCI);        
         dlci = gsm->dlci[addr];
 
@@ -79,7 +79,7 @@ static struct gsm_dlci *gsm_dlci_alloc(struct gsm_mux *gsm, int addr) {
 
     // more dlci setup ...
 
-    // register this new dlci object into the gsm parent's array
+    // register this new object into the parent's gsm.dlci[] array at index addr
     gsm->dlci[addr] = dlci;
     return dlci;
 }
@@ -89,9 +89,9 @@ static struct gsm_dlci *gsm_dlci_alloc(struct gsm_mux *gsm, int addr) {
 ## The bug
 Did you catch it? :)
 
-If we race two calls to `GSMIOC_SETCONF_DLCI`, both may see `gsm->dlci[addr]` as uninitialized, and both will attempt to setup a new dlci and register it. Both will succeed, but this means the parent gsm object will only have a reference to _one_ of those, because the other will be overwritten.
+If we race two calls to `GSMIOC_SETCONF_DLCI`, both may see `gsm->dlci[addr]` as uninitialized, and both will attempt to setup a new dlci and register it. Both will succeed, but this means the parent gsm object will only have a reference to _one_ of the objects, because the other will be overwritten.
 
-So! Using this, when we teardown the gsm object, it will try an destroy all children dlci objects. This is called whenever we either change the line discipline for our tty file descriptor, or if we close it outright. We get here through the `.close` function pointer in the above `tty_ldisc_ops` struct:
+So! Using this, when we teardown the gsm object, it will try and destroy all child dlci objects. This is called whenever we either change the line discipline for our tty file descriptor, or if we close it outright. We get here through the `close` function pointer in the above `tty_ldisc_ops` struct:
 ```c
 static void gsmld_close(struct tty_struct *tty) {
     // ...
@@ -107,7 +107,7 @@ In `gsm_cleanup_mux`:
             gsm_dlci_release(gsm->dlci[i]); // <-- this will free the dlci object
 ``` 
 
-One other thing to mention is the **use**. When we configure a dlci object (like above), we can pass arguments such that a timer is triggered in `gsm_dlci_config`:
+One other thing to mention is the **use**. When we configure a dlci object (like above), we can pass arguments such that a timer is armed in `gsm_dlci_config`:
 ```c
 static int gsm_dlci_config(struct gsm_dlci *dlci, struct gsm_dlci_config *dc, int open) {
     // ...
@@ -121,7 +121,7 @@ static int gsm_dlci_config(struct gsm_dlci *dlci, struct gsm_dlci_config *dc, in
 }
 ```
 
-This allows us to arm the timer to trigger at any point we choose, because control `gsm->t1`:
+`gsm_dlci_begin_open` allows us to arm the timer to trigger at any point we choose, because control `gsm->t1`:
 ```c
 static void gsm_dlci_begin_open(struct gsm_dlci *dlci) {
     // ...
@@ -138,7 +138,7 @@ static void gsm_dlci_begin_open(struct gsm_dlci *dlci) {
 }
 ```
 
-So, after however long we choose, we hit `gsm_dlci_t1`:
+After however much time has passed, the still-active dlci (the one that missed being deleted) will trigger `gsm_dlci_t1`:
 ```c
 static void gsm_dlci_t1(struct timer_list *t) {
     struct gsm_dlci *dlci = from_timer(dlci, t, t1);
@@ -188,7 +188,9 @@ static void gsm_dlci_t1(struct timer_list *t) {
 
 
 ## Exploit flow
-We race two threads to call the ioctl, setup two objects, delete the gsm, then wait for the timer to figre. This gives us the following splat:
+We race two threads to call the ioctl, setup two objects, delete the gsm, then wait for the timer to figre -- this is implemented in `ixode.c`.
+
+The above process gives us the following KASAN use-after-free splat:
 ```
 [   56.886978] ==================================================================
 [   56.889663] BUG: KASAN: slab-use-after-free in gsm_dlci_begin_close+0x45/0x100 [n_gsm]
@@ -347,8 +349,11 @@ We race two threads to call the ioctl, setup two objects, delete the gsm, then w
 ```
 
 ## Mitigation
-This bug (and other stupid n_gsm bugs) can be mitigated by disabling line discipline autoloading. You can also blacklist the n_gsm module, which I strongly suggest:
+This bug (and other stupid n_gsm bugs) can be mitigated by disabling line discipline autoloading.
+
+You can also blacklist the n_gsm module, which I strongly suggest:
 ```
-# sysctl dev.tty.ldisc_autoload=0              # disable autoloading
-# echo n_gsm > /etc/modprobe.d/blacklist.conf  # blacklist n_gsm
+# sysctl dev.tty.ldisc_autoload=0                                    # disable autoloading sysctl until reboot
+# echo -e "\n\ndev.tty.ldisc_autoload=0\n" >> /etc/sysctl.conf       # disable autoloading on future boots
+# echo -e "\n\nblacklist n_gsm\n" >> /etc/modprobe.d/blacklist.conf  # blacklist the n_gsm module
 ```
