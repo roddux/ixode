@@ -1,0 +1,1 @@
+See `notes.md` for information on the bug, and `ixode.c` for the proof-of-concept exploit that triggers the KASAN splat in `splat.txt`
