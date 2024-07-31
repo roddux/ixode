@@ -100,7 +100,7 @@ void set_affinity(u64 cpu) {
     cpu_set_t set;
     CPU_ZERO(&set);
     CPU_SET(cpu, &set);
-    SYS(sched_setaffinity(getpid(), sizeof(set), &set));
+    SYS(sched_setaffinity(gettid(), sizeof(set), &set));
 }
 
 // this function will perform the ioctl in a race
