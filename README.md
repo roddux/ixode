@@ -1,6 +1,6 @@
 See [`notes.md`](notes.md) for information on the bug, and [`ixode.c`](ixode.c) for the proof-of-concept exploit that triggers the KASAN splat in [`splat.txt`](splat.txt).
 
-Tested on `6.10.2`, with the config in [`repro_config`](repro_config) -- which is a lightly modified (+KASAN, -Canonical certs) config pulled from Ubuntu LTS. It's overkill for what we're doing here, but hey ho.
+Tested on `6.10.2` (_as root! this is patched for unpriv_) with the config in [`repro_config`](repro_config) -- which is a lightly modified (+KASAN, -Canonical certs) config pulled from Ubuntu LTS. It's overkill for what we're doing here, but hey ho.
 
 ---
 
