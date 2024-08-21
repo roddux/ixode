@@ -1,7 +1,9 @@
 # Overview
-N_GSM is a tty line discipline. We can autoload this in Ubuntu, because the `dev.tty.ldisc_autoload` sysctl is enabled, the n_gsm module isn't blacklisted -- it should be! -- and in kernels prior to 6.6 any user can open the n_gsm discipline without privileges.
+N_GSM is a tty line discipline. We can autoload this in Ubuntu, because the `dev.tty.ldisc_autoload` sysctl is enabled, the n_gsm module isn't blacklisted -- it should be! -- and in kernels prior to 6.6 any user can open the n_gsm discipline without privileges[1].
 
+> [1]: this is no longer true; [the patch](https://github.com/torvalds/linux/commit/67c37756898a5a6b2941a13ae7260c89b54e0d88) to `gsmld_open` to require `CAP_NET_ADMIN` in the initial namespace has since been backported to all relevant LTS kernels, so this is no longer a relevant/interesting bug :)
 
+ 
 # Technical details
 Okay, so a `gsm` object has a bunch of `dlci` objects associated with it. We allocate a `struct gsm_mux` by associating a line discipline with a TTY object, through the `TIOCSETD` ioctl. This ends up calling through to `gsmld_open`, through the `open` function pointer on the `tty_ldisc_packet` operations:
 ```c
@@ -138,7 +140,7 @@ static void gsm_dlci_begin_open(struct gsm_dlci *dlci) {
 }
 ```
 
-After however much time has passed, the still-active dlci (the one that missed being deleted) will trigger `gsm_dlci_t1`:
+After however much time has passed, the still-active dlci (the one that avoided being deleted) will trigger `gsm_dlci_t1`:
 ```c
 static void gsm_dlci_t1(struct timer_list *t) {
     struct gsm_dlci *dlci = from_timer(dlci, t, t1);
@@ -188,9 +190,13 @@ static void gsm_dlci_t1(struct timer_list *t) {
 
 
 ## Exploit flow
-We race two threads to call the ioctl, setup two objects, delete the gsm, then wait for the timer to figre -- this is implemented in `ixode.c`.
+We race two threads to call the ioctl, setup two objects, delete the gsm, then wait for the timer to fire-- this is implemented in `ixode.c`.
 
-The above process gives us the following KASAN use-after-free splat:
+The general idea for next steps from here was to be as lazy as possible. First, reuse Nassim's [Xen ELFNOTE ASLR bypass](https://github.com/Nassim-Asrir/ZDI-24-020/) to get kernel base. Then, reuse his netfilter trick to place some data at a known offset from kernel base, and trigger the bug while spraying fake GSM objects.
+
+If the spray lands, we should be able to achieve a `schedule_work` call on controlled data (in the static buffer). From there, probably change modprobe path to some user-controlled binary. Note that none of this has been implemented, because I have moved on since realising the patch was backported. An exercise for the reader!
+
+Anyway, `ixode.c` gives the following KASAN use-after-free splat:
 ```
 [   56.886978] ==================================================================
 [   56.889663] BUG: KASAN: slab-use-after-free in gsm_dlci_begin_close+0x45/0x100 [n_gsm]
@@ -349,11 +355,13 @@ The above process gives us the following KASAN use-after-free splat:
 ```
 
 ## Mitigation
-This bug (and other stupid n_gsm bugs) can be mitigated by disabling line discipline autoloading.
-
-You can also blacklist the n_gsm module, which I strongly suggest:
+This bug (and other line discipline bugs) can be mitigated by disabling line discipline autoloading.
 ```
 # sysctl dev.tty.ldisc_autoload=0                                    # disable autoloading sysctl until reboot
 # echo -e "\n\ndev.tty.ldisc_autoload=0\n" >> /etc/sysctl.conf       # disable autoloading on future boots
+```
+
+You can also blacklist the `n_gsm` module, which I strongly suggest: (this is less relevant since the patch)
+```
 # echo -e "\n\nblacklist n_gsm\n" >> /etc/modprobe.d/blacklist.conf  # blacklist the n_gsm module
 ```
